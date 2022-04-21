@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=f, initial-scale=1.0" />
+    <title>Test Calendar</title>
+  </head>
+  <body>
+    <style>
+      #app {
+        width: 100%;
+      }
+      .year-month {
+        display: inline-block;
+      }
+      .year-month em{
+        font: 700 23px/23px 'Noto Sans';
+        vertical-align: middle;
+      }
+      .days,
+      .dates {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+        width: 100%;
+      }
+      .prevmonth-date,
+      .nextmonth-date {
+        color: #cccccc;
+      }
+      .prev, .next {
+        display: inline-block;
+        background-color: transparent;
+        padding: 5px 10px;
+        border: 0;
+      }
+      .prev:hover,
+      .next:hover{
+        transition: all 0.5s ;
+        background-color: rgba(0, 0, 0, 0.1);
+      }
+      .thismonth-date {
+        color: #363636;
+      }
+      .days {
+        border-bottom: 1px solid #cccccc;
+      }
+      .days div {
+        padding: 15px 0;
+        text-align: center;
+      }
+      .days div:first-of-type {
+        color: #f65157;
+      }
+      .days div:last-of-type {
+        color: #67a3dd;
+      }
+      .dates .date{
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        padding: 10px 5px;
+        min-height: 100px;
+        text-align: center;
+        font: 400 12px/12px "Noto Sans"
+      }
+      .dates .date .extra{
+        order: 1;
+      }
+      .dates .date span{
+        order: 2;
+      }
+      .dates .date:hover{
+        transition: all 0.5s;
+        background-color: rgba(114, 114, 114, 0.1);
+      }
+      .dates .date:nth-of-type(7n-6){
+        color: #f65157;
+      }
+      .dates .date:nth-of-type(7n){
+        color: #67a3dd;
+      }
+      .dates .date:nth-of-type(7n-6):is(.prevmonth-date, .nextmonth-date){
+        opacity: 0.5;
+      }
+      .dates .date:nth-of-type(7n):is(.prevmonth-date, .nextmonth-date){
+        opacity: 0.5;
+      }
+      .date span {
+        display: block;
+        color: #ffffff;
+        padding: 3px 6px;
+        border-radius: 2px;
+        pointer-events: none;
+        margin: 5px 0;
+        text-align: left;
+      }
+      .date span.red {
+        background-color: #df7377;
+      }
+      .date span.blue {
+        background-color: #67a3dd;
+      }
+      .fake {
+        opacity: 0;
+        height: 2.3em;
+        z-index: 0;
+        pointer-events: none;
+      }
+      .overlay {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.3);
+      }
+      .overlay.active {
+        display: block;
+      }
+      .dialog-wrapper {
+        position: relative;
+        width: 200px;
+        height: 200px;
+        margin: 200px auto 0;
+        background-color: #ffffff;
+        box-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+      }
+      .dialog-wrapper .input {
+        display: block;
+        width: 150px;
+        margin: 0 auto;
+        text-indent: 10px;
+        border: 1px solid #cccccc;
+        line-height: 35px;
+      }
+      .dialog-wrapper select {
+        margin: 10px 0;
+      }
+      .dialog-wrapper .submit {
+        background-color: #2096f3;
+        color: #ffffff;
+        font: 400 16px/35px "Noto Sans";
+        width: 150px;
+        border: 0;
+      }
+      .dialog-wrapper .close {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        font-size: 30px;
+      }
+    </style>
+    <section id="app">
+      <section role="navigation" class="navigation">
+        <div class="year-month"></div>
+        <button type="button" class="prev">이전</button>
+        <button type="button" class="next">다음</button>
+      </section>
+      <button type="button" class="clear">클리어</button>
+      <main class="wrapper">
+        <div class="days"></div>
+        <div class="dates"></div>
+      </main>
+      <div class="overlay">
+        <form class="dialog-wrapper">
+          <h3></h3>
+          <input name="" placeholder="Event title" class="input"></input>
+          <select name="color" id="picker">
+            <option value="red">레드</option>
+            <option value="blue">블루</option>
+          </select>
+          <select name="count" id="count">
+            <option value="1">1일</option>
+            <option value="2">2일</option>
+            <option value="3">3일</option>
+            <option value="4">4일</option>
+            <option value="5">5일</option>
+          </select>
+          <button type='submit' class="submit">Confirm</button>
+          <span class="close">&times;</span>
+        </form>
+      </div>
+    </section>
+    <script src="./calendar.js"></script>
+    <script src="./dialog.js"></script>
+    <script src="./navigate.js"></script>
+  </body>
+</html>
