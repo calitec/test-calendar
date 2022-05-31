@@ -58,16 +58,10 @@
         display: flex;
         flex-direction: column;
         position: relative;
-        padding: 10px 5px;
+        /* padding: 10px 5px; */
         min-height: 100px;
         text-align: center;
-        font: 400 12px/12px "Noto Sans"
-      }
-      .dates .date .extra{
-        order: 1;
-      }
-      .dates .date span{
-        order: 2;
+        font: 400 12px/22px "Noto Sans"
       }
       .dates .date:hover{
         transition: all 0.5s;
@@ -85,24 +79,29 @@
       .dates .date:nth-of-type(7n):is(.prevmonth-date, .nextmonth-date){
         opacity: 0.5;
       }
-      .date span {
+      .dates .date span:not(.fake){
         display: block;
         color: #ffffff;
-        padding: 3px 6px;
         border-radius: 2px;
         pointer-events: none;
-        margin: 5px 0;
         text-align: left;
+        text-indent: 10px;
+      }
+      .dates .date span.extra{
+        order: 1;
       }
       .date span.red {
+        order: 2;
         background-color: #df7377;
       }
       .date span.blue {
+        order: 2;
         background-color: #67a3dd;
       }
       .fake {
+        order: 1;
         opacity: 0;
-        height: 2.3em;
+        height: 22px;
         z-index: 0;
         pointer-events: none;
       }
