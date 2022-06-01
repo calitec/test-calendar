@@ -5,7 +5,8 @@ const DATES_WRAPPER = document.querySelector(".dates");
 const TODAY = new Date();
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DAYS_FULL_LENGTH = DAYS.length;
-let saved_labels = localStorage.getItem("calendar");
+const SAVED_STORAGE = localStorage.getItem("calendar");
+let parsedStorage = JSON.parse(SAVED_STORAGE) ?? []; // initialize
 let current = TODAY;
 
 // calendar
@@ -29,7 +30,7 @@ function makeMonthYearRow(realDate) {
   const { currentYear, currentMonth } = factoryDate(realDate);
   let yearmonth = "";
   yearmonth = `<div class="year-month"><em>${currentMonth}</em> ${currentYear}</div>`;
-  return { yearmonth };
+  return yearmonth;
 }
 
 function makeDatesRows(realDate) {
@@ -87,7 +88,7 @@ function makeDatesRows(realDate) {
 }
 
 function renderCalendar(realDate) {
-  const { yearmonth } = makeMonthYearRow(realDate);
+  const yearmonth = makeMonthYearRow(realDate);
   const { days, dates } = makeDatesRows(realDate);
 
   NAV_WRAPPER.innerHTML = yearmonth;
@@ -95,9 +96,21 @@ function renderCalendar(realDate) {
   DATES_WRAPPER.innerHTML = dates;
 }
 
-function renderLabel(saved_labels) {
-  if (saved_labels != null) {
-    saved_labels.forEach((storageItem) => {
+function getDuration(start, end) {
+  // start, end are Date Objects
+  const DURATION = (end.getTime() - start.getTime()) / 86400000; // 86400000 == 24h -> milliseconds
+  const THIS_DAY = Number(start.getDay());
+
+  return {
+    duration: DURATION,
+    sliced_length: DAYS_FULL_LENGTH - THIS_DAY,
+    rest_length: DURATION - (DAYS_FULL_LENGTH - THIS_DAY),
+  };
+}
+
+function renderLabel(parsedStorage) {
+  if (parsedStorage != null) {
+    parsedStorage.forEach((storageItem) => {
       // renderAdditionalLabel arguments
       const STORE_ITEM = {
         start: new Date(storageItem.start),
@@ -126,18 +139,6 @@ function renderLabel(saved_labels) {
       });
     });
   }
-}
-
-function getDuration(start, end) {
-  // start, end are Date Objects
-  const DURATION = (end.getTime() - start.getTime()) / 86400000; // 86400000 == 24h -> milliseconds
-  const THIS_DAY = Number(start.getDay());
-
-  return {
-    duration: DURATION,
-    sliced_length: DAYS_FULL_LENGTH - THIS_DAY,
-    rest_length: DURATION - (DAYS_FULL_LENGTH - THIS_DAY),
-  };
 }
 
 function sliceByWeek(dom, domIndex, span, store_item) {
@@ -179,9 +180,11 @@ function renderAdditionalLabel(store_item, sliced_length, rest_length) {
   });
 }
 
-function makeFakeDom(index, count = 0) {
-  for (let i = 1; i < count; i++) {
-    const date = document.querySelector(`.date:nth-of-type(${index + i + 1})`);
+function makeFakeDom(domIndex, duration = 0) {
+  for (let i = 1; i < duration; i++) {
+    const date = document.querySelector(
+      `.date:nth-of-type(${domIndex + 1 + i})`
+    );
     const fake = document.createElement("span");
     fake.classList.add("fake");
     if (date != null) {
@@ -192,7 +195,7 @@ function makeFakeDom(index, count = 0) {
 
 (function init() {
   renderCalendar(current);
-  renderLabel(JSON.parse(saved_labels));
+  renderLabel(parsedStorage);
 })();
 
 document.querySelector(".clear").addEventListener("click", function () {
