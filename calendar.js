@@ -1,34 +1,34 @@
 const APP = document.querySelector("#app");
-const TITLE_WRAPPER = document.querySelector(".year-month");
+const NAV_WRAPPER = document.querySelector(".year-month");
 const DAYS_WRAPPER = document.querySelector(".days");
 const DATES_WRAPPER = document.querySelector(".dates");
 const TODAY = new Date();
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const SAVED_LABELS = localStorage.getItem("calendar");
+const DAYS_FULL_LENGTH = DAYS.length;
+let saved_labels = localStorage.getItem("calendar");
 let current = TODAY;
 
-// ### 달력 ###
+// calendar
 function factoryDate(realDate) {
   const year = realDate.getFullYear();
   const month = realDate.getMonth();
   const date = realDate.getDate();
+
   return {
-    currentYear: new Date(year, month, date).getFullYear(),
-    currentMonth: new Date(year, month, date).getMonth(),
-    currentDate: new Date(year, month, date).getDate(),
     prevLastDate: new Date(year, month, 0).getDate(),
     prevLastDay: new Date(year, month, 0).getDay(),
     thisLastDate: new Date(year, month + 1, 0).getDate(),
     thisLastDay: new Date(year, month + 1, 0).getDay(),
+    currentYear: new Date(year, month, date).getFullYear(),
+    currentMonth: new Date(year, month + 1, date).getMonth(),
+    currentDate: new Date(year, month + 1, date).getDate(),
   };
 }
 
 function makeMonthYearRow(realDate) {
   const { currentYear, currentMonth } = factoryDate(realDate);
   let yearmonth = "";
-  yearmonth = `<div class="year-month"><em>${
-    currentMonth + 1
-  }</em> ${currentYear}</div>`;
+  yearmonth = `<div class="year-month"><em>${currentMonth}</em> ${currentYear}</div>`;
   return { yearmonth };
 }
 
@@ -45,106 +45,79 @@ function makeDatesRows(realDate) {
   const fullWeeks = [];
   const fullDates = [];
 
-  // 요일
-  for (let i = 0; i < DAYS.length; i++) {
+  // days
+  for (let i = 0; i < DAYS_FULL_LENGTH; i++) {
     fullWeeks.push(`
         <div>${DAYS[i]}</div>
       `);
   }
 
-  // 이전 달 날짜
+  // prev month dates
   for (let i = prevLastDate - prevLastDay; i <= prevLastDate; i++) {
     fullDates.push(`
-        <div class="date prevmonth-date" data-date="${new Date(
-          currentYear,
-          currentMonth - 1,
-          i
-        ).toDateString()}">${i}</div>
-      `);
+        <div class="date prevmonth-date" 
+        data-date="${new Date(
+          `${currentYear}-${currentMonth - 1}-${i}`
+        ).toDateString()}">
+        ${i}</div>`);
   }
 
-  // 이번 달 날짜
+  // this month dates
   for (let i = 1; i <= thisLastDate; i++) {
     fullDates.push(`
         <div class="date thismonth-date" data-date="${new Date(
-          currentYear,
-          currentMonth,
-          i
+          `${currentYear}-${currentMonth}-${i}`
         ).toDateString()}">${i}</div>
       `);
   }
 
-  // 다음 달 날짜
-  for (let i = 1; i <= 6 - thisLastDay; i++) {
+  // next month dates
+  for (let i = 1; i < DAYS_FULL_LENGTH - thisLastDay; i++) {
     fullDates.push(`
         <div class="date nextmonth-date" data-date="${new Date(
-          currentYear,
-          currentMonth + 1,
-          i
+          `${currentYear}-${currentMonth + 1}-${i}`
         ).toDateString()}">${i}</div>
       `);
   }
 
-  const result = {
+  return {
     days: fullWeeks.join(""),
     dates: fullDates.join(""),
   };
-  console.log(result);
-  return result;
 }
 
 function renderCalendar(realDate) {
   const { yearmonth } = makeMonthYearRow(realDate);
   const { days, dates } = makeDatesRows(realDate);
 
-  TITLE_WRAPPER.innerHTML = yearmonth;
+  NAV_WRAPPER.innerHTML = yearmonth;
   DAYS_WRAPPER.innerHTML = days;
   DATES_WRAPPER.innerHTML = dates;
 }
 
-function renderLabel() {
-  if (SAVED_LABELS != null) {
-    JSON.parse(SAVED_LABELS).forEach((storageItem) => {
-      const STORAGE_OBJ = {
-        // renderAdditionalLabel parameter
-        month: new Date(storageItem.name).getMonth(),
-        date: new Date(storageItem.name).getDate(),
-        day: new Date(storageItem.name).getDay(),
-        name: storageItem.name,
+function renderLabel(saved_labels) {
+  if (saved_labels != null) {
+    saved_labels.forEach((storageItem) => {
+      // renderAdditionalLabel arguments
+      const STORE_ITEM = {
+        start: new Date(storageItem.start),
+        end: new Date(storageItem.end),
         content: storageItem.content,
         color: storageItem.color,
-        count: storageItem.count,
       };
 
+      const { start, end, content, color } = STORE_ITEM;
+      const { duration } = getDuration(start, end);
+
       document.querySelectorAll(".date").forEach((dom, index) => {
-        if (dom.dataset.date === STORAGE_OBJ.name) {
+        if (dom.dataset.date === start.toDateString()) {
           const SPAN = document.createElement("span");
-          SPAN.innerHTML = STORAGE_OBJ.content;
-          SPAN.classList.add(STORAGE_OBJ.color === "red" ? "red" : "blue");
+          SPAN.innerHTML = content;
+          SPAN.classList.add(color === "red" ? "red" : "blue");
 
           // when label has extra length
-          if (STORAGE_OBJ.count > 1) {
-            const DAYS_LENGTH = 7;
-            const REST_COUNT =
-              Number(STORAGE_OBJ.day) + Number(STORAGE_OBJ.count) - DAYS_LENGTH;
-            const SPLITTED_COUNT = STORAGE_OBJ.count - REST_COUNT;
-            SPAN.classList.add("extra");
-
-            // add a week row exceeded day count
-            if (
-              Number(STORAGE_OBJ.day) + Number(STORAGE_OBJ.count) >
-              DAYS_LENGTH
-            ) {
-              SPAN.style.width = `calc(100% * ${SPLITTED_COUNT})`;
-              dom.appendChild(SPAN);
-              renderAdditionalLabel(STORAGE_OBJ, SPLITTED_COUNT, REST_COUNT);
-            } else {
-              // a week row in day count
-              SPAN.style.width = `calc(100% * ${STORAGE_OBJ.count}`;
-              dom.appendChild(SPAN);
-            }
-
-            makeFakeDom(index + 3, STORAGE_OBJ.count);
+          if (duration > 1) {
+            sliceByWeek(dom, index, SPAN, STORE_ITEM);
           } else {
             // when date length 1
             dom.appendChild(SPAN);
@@ -155,43 +128,74 @@ function renderLabel() {
   }
 }
 
-function renderAdditionalLabel(storage_obj, splitted_count, rest_count) {
-  const { month, date, content, color } = storage_obj;
+function getDuration(start, end) {
+  // start, end are Date Objects
+  const DURATION = (end.getTime() - start.getTime()) / 86400000; // 86400000 == 24h -> milliseconds
+  const THIS_DAY = Number(start.getDay());
+
+  return {
+    duration: DURATION,
+    sliced_length: DAYS_FULL_LENGTH - THIS_DAY,
+    rest_length: DURATION - (DAYS_FULL_LENGTH - THIS_DAY),
+  };
+}
+
+function sliceByWeek(dom, domIndex, span, store_item) {
+  const { start, end } = store_item;
+  const { duration, sliced_length, rest_length } = getDuration(start, end);
+
+  // add a week row exceeded day count
+  if (start.getDay() + duration > DAYS_FULL_LENGTH) {
+    span.style.width = `calc(100% * ${sliced_length})`;
+    dom.appendChild(span);
+    makeFakeDom(domIndex, sliced_length);
+    renderAdditionalLabel(store_item, sliced_length, rest_length);
+  } else {
+    // a week row in day count
+    span.style.width = `calc(100% * ${duration}`;
+    dom.appendChild(span);
+    makeFakeDom(domIndex, duration);
+  }
+}
+
+function renderAdditionalLabel(store_item, sliced_length, rest_length) {
   const { currentYear } = factoryDate(current);
-  const REST_START_DATES = new Date(
+  const { start, content, color } = store_item;
+  const REST_DATE_POSITION = new Date(
     currentYear,
-    month,
-    date + splitted_count
+    start.getMonth(),
+    start.getDate() + sliced_length
   ).toDateString();
 
-  document.querySelectorAll(".date").forEach((dom) => {
-    if (REST_START_DATES === dom.dataset.date) {
+  document.querySelectorAll(".date").forEach((dom, index) => {
+    if (REST_DATE_POSITION === dom.dataset.date) {
       const span = document.createElement("span");
       span.innerHTML = content;
       span.classList.add(color === "red" ? "red" : "blue");
-      span.style.width = `calc(100% * ${rest_count}`;
+      span.style.width = `calc(100% * ${rest_length}`;
       dom.appendChild(span);
+      makeFakeDom(index, rest_length);
     }
   });
 }
 
 function makeFakeDom(index, count = 0) {
-  for (let i = 0; i < count - 1; i++) {
-    const date = document.querySelector(`.date:nth-of-type(${index + i - 1})`);
+  for (let i = 1; i < count; i++) {
+    const date = document.querySelector(`.date:nth-of-type(${index + i + 1})`);
     const fake = document.createElement("span");
-    if (date !== null) {
-      fake.classList.add("fake");
+    fake.classList.add("fake");
+    if (date != null) {
       date.appendChild(fake);
     }
   }
 }
 
+(function init() {
+  renderCalendar(current);
+  renderLabel(JSON.parse(saved_labels));
+})();
+
 document.querySelector(".clear").addEventListener("click", function () {
   localStorage.clear();
   window.location.reload();
 });
-
-(function init() {
-  renderCalendar(current);
-  renderLabel();
-})();
